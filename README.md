@@ -1,26 +1,31 @@
 # BRUTEFORCEtest
 
-Program do brute-force na stronach WWW/API bez znajomości hasła ani jego hasha.
+Brute-force na stronach WWW bez znajomości pól formularza/logowania — automatyczna detekcja!
 
-## Uruchamianie
+## Instalacja
 
 ```bash
 pip install -r requirements.txt
-
-python main.py \
-  --target-url https://twojastrona.pl/login \
-  --username admin \
-  --charset ascii_uppercase+digits \
-  --min-length 5 \
-  --max-length 5 \
-  --threads 4 \
-  --success-string "Zalogowano pomyślnie"
 ```
 
-**Wskazówki:**
-- `--target-url` – adres endpointa logowania
-- `--username` – login użytkownika
-- `--success-string` – unikalny tekst pojawiający się po poprawnym logowaniu (np. "Welcome" lub "Panel")
-- `--fail-string` – (opcjonalne) tekst, który oznacza błędne hasło
+## Użycie
 
-**Uwaga:** Przed użyciem sprawdź legalność testów na danej stronie!
+Podstawowa komenda (wszystko wykrywa się automatycznie):
+
+```bash
+python main.py --target-url https://libre.forumpolish.com/login --username Admin --success-string "Wyloguj"
+```
+
+Opcje zaawansowane (możesz nadpisać domyślne wykrywanie):
+
+```bash
+python main.py --target-url ... --username ... --min-length 5 --max-length 8 --login-field login --password-field pass
+```
+
+### Co robi program?
+- Wykrywa automatycznie pola loginu i hasła w formularzu logowania.
+- Automatycznie wykrywa minimalną i maksymalną długość hasła (jeśli możliwe).
+- Automatycznie ustawia pozostałe pola formularza (ukryte/checkboxy).
+- Próbkuje różne hasła i rozpoznaje sukces po obecności tekstu np. "Wyloguj".
+
+**Uwaga:** Używaj tylko do testów lub za zgodą właściciela strony!
