@@ -77,11 +77,24 @@ def get_password_field_info(soup, password_field):
 
 def guess_password_rules(form_soup, password_field):
     """
-    Spróbuj wykryć ograniczenia na polu hasła oraz podaj dodatkowe dostępne informacje.
+    Wykrywa ograniczenia oraz metadane na polu hasła: minlength, maxlength, pattern, placeholder, title, required.
+    Zwraca słownik z tymi informacjami.
     """
+    info = {}
     pw_input = form_soup.find("input", {"name": password_field})
-    minlen = int(pw_input.get("minlength", 4)) if pw_input and pw_input.get("minlength") else 4
-    maxlen = int(pw_input.get("maxlength", 12)) if pw_input and pw_input.get("maxlength") else 12
-    pattern = pw_input.get("pattern") if pw_input and pw_input.get("pattern") else None
-    # Możesz tu też zwracać pattern, required, placeholder, title
-    return minlen, maxlen, pattern
+    if not pw_input:
+        # Wartości domyślne
+        info["minlength"] = 4
+        info["maxlength"] = 12
+        info["pattern"] = None
+        info["placeholder"] = None
+        info["title"] = None
+        info["required"] = False
+        return info
+    info["minlength"] = int(pw_input.get("minlength", 4)) if pw_input.get("minlength") else 4
+    info["maxlength"] = int(pw_input.get("maxlength", 12)) if pw_input.get("maxlength") else 12
+    info["pattern"] = pw_input.get("pattern", None)
+    info["placeholder"] = pw_input.get("placeholder", None)
+    info["title"] = pw_input.get("title", None)
+    info["required"] = pw_input.has_attr("required")
+    return info
