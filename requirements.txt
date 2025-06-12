@@ -2,3 +2,5 @@ requests
 tqdm
 pytest
 colorama
+beautifulsoup4
+lxml
