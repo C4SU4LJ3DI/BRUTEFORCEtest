@@ -2,6 +2,10 @@ import requests
 from bs4 import BeautifulSoup
 
 def guess_login_form(url):
+    """
+    Wykrywa podstawowe informacje o formularzu logowania oraz analizuje pole hasła,
+    próbując wydobyć jak najwięcej metadanych (np. długość, pattern, placeholder, title).
+    """
     r = requests.get(url, timeout=8, allow_redirects=True)
     soup = BeautifulSoup(r.text, "lxml")
     form = soup.find("form")
@@ -42,19 +46,42 @@ def guess_login_form(url):
                 password_field = inp.get("name", "")
                 break
 
+    # Pobierz więcej informacji o polu hasła
+    password_info = get_password_field_info(soup, password_field)
+
     return {
         "action": form.get("action") or url,
         "login_field": login_field,
         "password_field": password_field,
         "submit_field": submit_field,
         "extra_fields": extra_fields,
-        "method": (form.get("method") or "post").lower()
+        "method": (form.get("method") or "post").lower(),
+        "password_info": password_info,
     }
 
+def get_password_field_info(soup, password_field):
+    """
+    Zwraca informacje o polu hasła: minlength, maxlength, pattern, placeholder, title, required.
+    """
+    info = {}
+    pw_input = soup.find("input", {"name": password_field})
+    if not pw_input:
+        return info
+    info["minlength"] = int(pw_input.get("minlength", 4)) if pw_input.get("minlength") else 4
+    info["maxlength"] = int(pw_input.get("maxlength", 12)) if pw_input.get("maxlength") else 12
+    info["pattern"] = pw_input.get("pattern", None)
+    info["placeholder"] = pw_input.get("placeholder", None)
+    info["title"] = pw_input.get("title", None)
+    info["required"] = pw_input.has_attr("required")
+    return info
+
 def guess_password_rules(form_soup, password_field):
-    # Spróbuj wykryć ograniczenia na polu hasła
+    """
+    Spróbuj wykryć ograniczenia na polu hasła oraz podaj dodatkowe dostępne informacje.
+    """
     pw_input = form_soup.find("input", {"name": password_field})
-    minlen = int(pw_input.get("minlength", 4)) if pw_input else 4
-    maxlen = int(pw_input.get("maxlength", 12)) if pw_input else 12
-    # Możesz tutaj rozbudować o wykrywanie pattern, required, etc.
-    return minlen, maxlen
+    minlen = int(pw_input.get("minlength", 4)) if pw_input and pw_input.get("minlength") else 4
+    maxlen = int(pw_input.get("maxlength", 12)) if pw_input and pw_input.get("maxlength") else 12
+    pattern = pw_input.get("pattern") if pw_input and pw_input.get("pattern") else None
+    # Możesz tu też zwracać pattern, required, placeholder, title
+    return minlen, maxlen, pattern
