@@ -1,71 +1,57 @@
 import itertools
 import string
 import threading
-from queue import Queue
 
-# Zestawy znaków predefiniowane
+# Obsługiwane zestawy znaków dla brute-force
 SUPPORTED_CHARSETS = {
     "ascii_lowercase": string.ascii_lowercase,
     "ascii_uppercase": string.ascii_uppercase,
     "digits": string.digits,
     "ascii_letters": string.ascii_letters,
     "ascii_lowercase_digits": string.ascii_lowercase + string.digits,
-    "ascii_lowercase_digits_special": string.ascii_lowercase + string.digits + "!@#$%^&*()-_+=",
+    "ascii_lowercase_digits_special": string.ascii_lowercase + string.digits + "!@#$%^&*",
     "full_ascii": string.ascii_letters + string.digits + string.punctuation,
 }
 
-def brute_force_search(data, target):
-    """Brute-force wyszukiwanie wartości w liście."""
-    for idx, item in enumerate(data):
-        if item == target:
+def brute_force_search(data, target, verbose=False):
+    """Przeszukuje listę data w poszukiwaniu target, zwraca indeks lub -1."""
+    for idx, val in enumerate(data):
+        if verbose:
+            print(f"[VERBOSE] Sprawdzam indeks {idx}: {val}")
+        if val == target:
             return idx
     return -1
 
-def _password_worker(password, charset, max_length, task_queue, found_event, result_holder):
-    while not found_event.is_set():
-        try:
-            length, prefix = task_queue.get(timeout=0.1)
-        except Exception:
-            break
-        for comb in itertools.product(charset, repeat=length - len(prefix)):
-            guess = prefix + ''.join(comb)
-            if found_event.is_set():
-                break
-            if guess == password:
-                result_holder.append(guess)
-                found_event.set()
-                break
-        task_queue.task_done()
+def brute_force_password_multithreaded(password, charset="ascii_lowercase_digits_special", max_length=4, num_threads=4, verbose=False):
+    """Brute-force hasła rozdzielony na wątki."""
+    charset_str = SUPPORTED_CHARSETS[charset]
+    found_result = {"found": None}
+    lock = threading.Lock()
+    stop_event = threading.Event()
 
-def brute_force_password_multithreaded(password, charset="ascii_lowercase_digits_special", max_length=4, num_threads=4):
-    """
-    Brute-force łamanie hasła z wielowątkowością.
-    """
-    if charset in SUPPORTED_CHARSETS:
-        charset = SUPPORTED_CHARSETS[charset]
-    else:
-        charset = string.ascii_lowercase
-    found_event = threading.Event()
-    result_holder = []
-    task_queue = Queue()
-
-    # Podziel zadania na prefiksy długości 1 dla równoległości
-    for length in range(1, max_length + 1):
-        for prefix in itertools.product(charset, repeat=1):
-            task_queue.put((length, ''.join(prefix)))
+    def worker(start_length, step):
+        for length in range(start_length, max_length + 1, step):
+            if verbose:
+                print(f"[VERBOSE] Wątek {threading.current_thread().name} sprawdza długość {length}")
+            for attempt in itertools.product(charset_str, repeat=length):
+                if stop_event.is_set():
+                    return
+                attempt_str = ''.join(attempt)
+                if verbose and length <= 2:
+                    print(f"[VERBOSE] Próba: {attempt_str}")
+                if attempt_str == password:
+                    with lock:
+                        found_result["found"] = attempt_str
+                        stop_event.set()
+                    return
 
     threads = []
-    for _ in range(num_threads):
-        t = threading.Thread(
-            target=_password_worker,
-            args=(password, charset, max_length, task_queue, found_event, result_holder)
-        )
-        t.daemon = True
-        t.start()
+    for i in range(num_threads):
+        t = threading.Thread(target=worker, args=(i+1, num_threads), name=f"Thread-{i+1}")
         threads.append(t)
+        t.start()
 
-    task_queue.join()
-    found_event.set()
     for t in threads:
-        t.join(timeout=0.1)
-    return result_holder[0] if result_holder else None
+        t.join()
+
+    return found_result["found"]
