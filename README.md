@@ -1,5 +1,5 @@
 # BRUTEFORCEtest
-# testowanie możliwości / cyberbezpieczeństwa / TYLKO DO LEGALNEGO UŻYTKU / testowanie kodowania AI
+# testowanie możliwości / cyberbezpieczeństwo / TYLKO DO LEGALNEGO UŻYTKU / testowanie kodowania AI
 
 # Projekt: Bruteforce (zaawansowany)
 
