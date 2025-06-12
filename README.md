@@ -22,7 +22,7 @@ pip install -r requirements.txt
 Podstawowa komenda (wszystko wykrywa się automatycznie):
 
 ```bash
-python main.py --target-url https://libre.forumpolish.com/login --username Admin --success-string "Wyloguj"
+python main.py --target-url adresURL/login --username NazwaUser --success-string "Wyloguj"
 ```
 
 Opcje zaawansowane (możesz nadpisać domyślne wykrywanie):
