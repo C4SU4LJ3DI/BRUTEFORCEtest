@@ -3,7 +3,6 @@
 ## O projekcie i odpowiedzialność
 
 Ten projekt powstał wyłącznie w celach edukacyjnych oraz w celu pogłębiania wiedzy o cyberbezpieczeństwie i sposobach ochrony przed atakami typu brute-force.  
-Część kodu została wygenerowana przy pomocy AI.
 
 **Autor nie ponosi żadnej odpowiedzialności za niewłaściwe wykorzystanie tego narzędzia. Wszelkie działania z użyciem poniższego kodu powinny być prowadzone wyłącznie na własnych zasobach, w środowisku testowym lub za wyraźną zgodą właściciela danej strony!**
 
